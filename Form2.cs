@@ -25,7 +25,7 @@ namespace AE_practice
             {
                 string layerName = form1.axMapControl1.get_Layer(i).Name;
                 comboBox1.Items.Add(layerName);
-            }
+        }
         }
 
         private void button2_Click(object sender, EventArgs e)
