@@ -32,7 +32,8 @@ namespace AE_practice
 
         private void 盆域阴影法ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            form.ShowDialog();
+            var form2 = new Form2(this);
+            form2.ShowDialog();
         }
 
         private void 文件ToolStripMenuItem_Click(object sender, EventArgs e)
