@@ -1,5 +1,6 @@
 ﻿using ESRI.ArcGIS.Carto;
 using ESRI.ArcGIS.Controls;
+using ESRI.ArcGIS.GeoAnalyst;
 using ESRI.ArcGIS.Geodatabase;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace AE_practice
                 comboBox1.Items.Add(layerName);
             }
         }
-
+        /****************************事件响应函数********************************/
         private void button2_Click(object sender, EventArgs e)
         {
             Close();
@@ -47,6 +48,25 @@ namespace AE_practice
             }
             textBox1.Text = foldPath;
         }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string lyrName = comboBox1.Text;
+            string savePath = textBox1.Text;
+            IMapControlDefault Mapcontrol = form1.axMapControl1.Object as IMapControlDefault;
+            if (lyrName != "" && savePath != "")
+            {
+                ILayer layer = GetLayer(Mapcontrol, lyrName);
+                string path = getLayerPath(layer);
+                //MessageBox.Show(path);
+                basinShadow(layer);
+                Close();
+            }
+            else
+            {
+                MessageBox.Show("请完成参数选择！");
+            }
+        }
+        /****************************数据处理函数********************************/
         private static string getLayerPath(ILayer pLayer)
         {
             IDataLayer2 dataLayer = pLayer as IDataLayer2;
@@ -55,7 +75,6 @@ namespace AE_practice
             string s = workspace.PathName + pLayer.Name;
             return s;
         }
-
         private ILayer GetLayer(IMapControlDefault mapcontrol, string LayerName)
         {
             ILayer layer = null;
@@ -71,21 +90,21 @@ namespace AE_practice
             }
             return layer;
         }
-        private void button1_Click(object sender, EventArgs e)
+        private void basinShadow(ILayer rasterLayer)
         {
-            string lyrName = comboBox1.Text;
-            string savePath = textBox1.Text;
-            IMapControlDefault Mapcontrol = form1.axMapControl1.Object as IMapControlDefault;           
-            if (lyrName != "" && savePath != "")
-            {
-                ILayer layer = GetLayer(Mapcontrol, lyrName);
-                string path = getLayerPath(layer);
-                //MessageBox.Show(path);
-            }
-            else
-            {
-                MessageBox.Show("请完成参数选择！");
-            }
+            IGeoDataset inGeoDataset = rasterLayer as IGeoDataset;          
+            IGeoDataset outGeoDataset;
+            ISurfaceOp surfaceOp;
+            surfaceOp = new RasterSurfaceOpClass();
+            IGeoDataset hillShade = surfaceOp.HillShade(inGeoDataset,0,90,true);
+            outGeoDataset = hillShade;
+            IRasterLayer hillShadeLyr = new RasterLayerClass();
+            IRaster hillShadeRaster;
+            hillShadeRaster = (IRaster)outGeoDataset;
+            hillShadeLyr.CreateFromRaster(hillShadeRaster);
+            hillShadeLyr.Name = "hillshade";
+            form1.axMapControl1.AddLayer((ILayer)hillShadeLyr,0);
+            form1.axMapControl1.ActiveView.Refresh();
         }
     }
 }
