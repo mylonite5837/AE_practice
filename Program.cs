@@ -20,7 +20,9 @@ namespace AE_practice
         {
             //ESRI License Initializer generated code.
             m_AOLicenseInitializer.InitializeApplication(new esriLicenseProductCode[] { esriLicenseProductCode.esriLicenseProductCodeEngine },
-            new esriLicenseExtensionCode[] { esriLicenseExtensionCode.esriLicenseExtensionCodeSpatialAnalyst });
+            new esriLicenseExtensionCode[] { esriLicenseExtensionCode.esriLicenseExtensionCodeSpatialAnalyst,
+                                             esriLicenseExtensionCode.esriLicenseExtensionCode3DAnalyst,
+                                             esriLicenseExtensionCode.esriLicenseExtensionCodeDataInteroperability});
             Application.EnableVisualStyles();
             ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);
             Application.SetCompatibleTextRenderingDefault(false);

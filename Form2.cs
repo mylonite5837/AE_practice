@@ -2,6 +2,8 @@
 using ESRI.ArcGIS.Controls;
 using ESRI.ArcGIS.GeoAnalyst;
 using ESRI.ArcGIS.Geodatabase;
+using ESRI.ArcGIS.DataSourcesFile;
+using ESRI.ArcGIS.Geoprocessing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,6 +13,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ESRI.ArcGIS.SpatialAnalyst;
+using ESRI.ArcGIS.esriSystem;
 
 namespace AE_practice
 {
@@ -58,7 +62,7 @@ namespace AE_practice
                 ILayer layer = GetLayer(Mapcontrol, lyrName);
                 string path = getLayerPath(layer);
                 //MessageBox.Show(path);
-                basinShadow(layer);
+                basinShadow(layer, path);
                 Close();
             }
             else
@@ -72,7 +76,8 @@ namespace AE_practice
             IDataLayer2 dataLayer = pLayer as IDataLayer2;
             IDatasetName dataset = dataLayer.DataSourceName as IDatasetName;
             IWorkspaceName workspace = dataset.WorkspaceName;
-            string s = workspace.PathName + pLayer.Name;
+            //string s = workspace.PathName + pLayer.Name;
+            string s = workspace.PathName;
             return s;
         }
         private ILayer GetLayer(IMapControlDefault mapcontrol, string LayerName)
@@ -90,13 +95,20 @@ namespace AE_practice
             }
             return layer;
         }
-        private void basinShadow(ILayer rasterLayer)
+        private void basinShadow(ILayer rasterLayer, string path)
         {
-            IGeoDataset inGeoDataset = rasterLayer as IGeoDataset;          
+            IGeoDataset inGeoDataset = rasterLayer as IGeoDataset;
             IGeoDataset outGeoDataset;
             ISurfaceOp surfaceOp;
+            IWorkspaceFactory2 pWorkspaceFactoryShp = new ShapefileWorkspaceFactoryClass();
+            IWorkspace pWorkspace = pWorkspaceFactoryShp.OpenFromFile(path, 0);
+            IHydrologyOp hydrologyOp;
+            IConversionOp conversionOp;
+            IGeoProcessor geoProcessor = new GeoProcessorClass();
+            geoProcessor.OverwriteOutput = true;
             surfaceOp = new RasterSurfaceOpClass();
             IGeoDataset hillShade = surfaceOp.HillShade(inGeoDataset,0,90,true);
+            /*
             outGeoDataset = hillShade;
             IRasterLayer hillShadeLyr = new RasterLayerClass();
             IRaster hillShadeRaster;
@@ -105,6 +117,19 @@ namespace AE_practice
             hillShadeLyr.Name = "hillshade";
             form1.axMapControl1.AddLayer((ILayer)hillShadeLyr,0);
             form1.axMapControl1.ActiveView.Refresh();
+            */
+            hydrologyOp = new RasterHydrologyOpClass();
+            conversionOp = new RasterConversionOpClass();
+            IGeoDataset flowDir = hydrologyOp.FlowDirection(hillShade, true, false);
+            IGeoDataset basin = hydrologyOp.Basin(flowDir);
+            string name = "basin2feature";
+            IGeoDataset basin2feature = conversionOp.RasterDataToPolygonFeatureData(basin, pWorkspace, name, true);
+
+            IVariantArray variantArray = new VarArrayClass();
+            IGeoProcessorResult tGeoResult = geoProcessor.Execute();
+            
+            
+            
         }
     }
 }
