@@ -15,12 +15,15 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ESRI.ArcGIS.SpatialAnalyst;
 using ESRI.ArcGIS.esriSystem;
+using ESRI.ArcGIS.DataSourcesRaster;
 
 namespace AE_practice
 {
     public partial class Form2 : Form
     {
         private Form1 form1;
+        private IGeoDataset inputDataset;   //输入数据集
+        private IGeoDataset outputDataset;   //输出数据集
         public Form2(Form1 form)
         {
             InitializeComponent();
@@ -71,6 +74,39 @@ namespace AE_practice
             }
         }
         /****************************数据处理函数********************************/
+        private void SaveAndShowFeatureDataset(string filePath)
+        {
+            string directoryPath = System.IO.Path.GetDirectoryName(filePath);
+            string[] fileName = System.IO.Path.GetFileName(filePath).Split('.');
+
+            IWorkspaceFactory wf = new ShapefileWorkspaceFactoryClass();		//要注意一下这里，因为是要保存矢量文件，所以应该创建矢量工作空间工厂对象
+            IWorkspace ws = wf.OpenFromFile(directoryPath, 0) as IWorkspace;
+            IConversionOp converop = new RasterConversionOpClass();
+            converop.ToFeatureData(outputDataset, ESRI.ArcGIS.Geometry.esriGeometryType.esriGeometryPolyline, ws, fileName[0]);
+            IFeatureClass featureClass = outputDataset as IFeatureClass;
+            IFeatureLayer featLayer = new FeatureLayerClass();
+            featLayer.FeatureClass = featureClass;
+            featLayer.Name = fileName[0];          //设置图层名字
+            form1.axMapControl1.AddLayer(featLayer);
+            form1.axMapControl1.Refresh();
+        }
+        private void SaveAndShowRasterDataset(string filePath)
+        {
+            string directoryPath = System.IO.Path.GetDirectoryName(filePath);
+            string fileName = System.IO.Path.GetFileName(filePath);
+
+            IWorkspaceFactory wf = new RasterWorkspaceFactoryClass();
+            IWorkspace ws = wf.OpenFromFile(directoryPath, 0) as IWorkspace;
+            IConversionOp converop = new RasterConversionOpClass();
+            converop.ToRasterDataset(outputDataset, "TIFF", ws, fileName);
+            IRasterLayer rlayer = new RasterLayerClass();
+            IRaster raster = new Raster();
+            raster = outputDataset as IRaster;
+            rlayer.CreateFromRaster(raster);       //使用raster对象创建一个rasterLayer对象
+            rlayer.Name = fileName;    //设置图层名字
+            form1.axMapControl1.AddLayer(rlayer);
+            form1.axMapControl1.Refresh();
+        }
         private static string getLayerPath(ILayer pLayer)
         {
             IDataLayer2 dataLayer = pLayer as IDataLayer2;
@@ -122,14 +158,16 @@ namespace AE_practice
             conversionOp = new RasterConversionOpClass();
             IGeoDataset flowDir = hydrologyOp.FlowDirection(hillShade, true, false);
             IGeoDataset basin = hydrologyOp.Basin(flowDir);
-            string name = "basin2feature";
-            IGeoDataset basin2feature = conversionOp.RasterDataToPolygonFeatureData(basin, pWorkspace, name, true);
+            string name = "basin2feature.shp";
+            //IGeoDataset basin2feature = conversionOp.ToFeatureData(basin,ESRI.ArcGIS.Geometry.esriGeometryType.esriGeometryPolygon,path)
+            IVariantArray parameters = new VarArrayClass();
+            string saveName = "slopUnit.shp";
+            parameters.Add(basin2feature);
+            parameters.Add(path + "slopUnit.shp");
+            IGeoProcessorResult geoProcessorResult = geoProcessor.Execute("MultiPartToSinglePart", parameters, null);
+            form1.axMapControl1.AddShapeFile(path, saveName);
+            form1.axMapControl1.ActiveView.Refresh();
 
-            IVariantArray variantArray = new VarArrayClass();
-            IGeoProcessorResult tGeoResult = geoProcessor.Execute();
-            
-            
-            
         }
     }
 }
